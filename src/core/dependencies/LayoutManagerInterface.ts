@@ -1,6 +1,6 @@
 import { Dimension } from "../dependencies/LayoutProvider";
 
- export interface LayoutManagerInterface {
+export interface LayoutManagerInterface {
   getLayoutDimension(): Dimension;
 
    getLayouts(): Rect[];

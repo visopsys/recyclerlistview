@@ -5,7 +5,7 @@
  * views just the way they want. Current implementation is a StaggeredList
  */
 import LayoutProvider, {
-  Dimension
+  Dimension,
 } from "../dependencies/LayoutProvider";
 import CustomError from "../exceptions/CustomError";
 
@@ -18,7 +18,7 @@ export default class LayoutManager {
   private _isHorizontal: boolean;
   private _columnCount: number;
 
-  constructor(columnCount: number, layoutProvider: LayoutProvider, dimensions: Dimension, isHorizontal: boolean = false, cachedLayouts ? : Layout[]) {
+  constructor(columnCount: number, layoutProvider: LayoutProvider, dimensions: Dimension, isHorizontal: boolean = false, cachedLayouts?: Layout[]) {
     this._columnCount = columnCount;
     this._layoutProvider = layoutProvider;
     this._window = dimensions;
@@ -31,7 +31,7 @@ export default class LayoutManager {
   public getLayoutDimension(): Dimension {
     return {
       height: this._totalHeight,
-      width: this._totalWidth
+      width: this._totalWidth,
     };
   }
 
@@ -43,7 +43,7 @@ export default class LayoutManager {
     if (this._layouts.length > index) {
       return {
         x: this._layouts[index].x,
-        y: this._layouts[index].y
+        y: this._layouts[index].y,
       };
     } else {
       throw new CustomError({

@@ -30,7 +30,6 @@ import RecyclerListViewExceptions from "./exceptions/RecyclerListViewExceptions"
 // import LayoutManager, { Point, Layout } from "./layoutmanager/LayoutManager";
 import MasonaryLayoutManager from "./layoutmanager/MasonaryLayoutManager";
 
-
 import {
     LayoutManagerInterface,
     Point,
@@ -414,7 +413,7 @@ export default class RecyclerListView extends React.Component<RecyclerListViewPr
                 this._layout,
                 this.props.isHorizontal,
                 this._cachedLayouts,
-            )
+            ),
         );
         this._virtualRenderer.setLayoutProvider(this.props.layoutProvider);
         this._virtualRenderer.init();
