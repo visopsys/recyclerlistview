@@ -27,7 +27,17 @@ import DataProvider from "./dependencies/DataProvider";
 import LayoutProvider, { Dimension } from "./dependencies/LayoutProvider";
 import CustomError from "./exceptions/CustomError";
 import RecyclerListViewExceptions from "./exceptions/RecyclerListViewExceptions";
-import LayoutManager, { Point, Layout } from "./layoutmanager/LayoutManager";
+// import LayoutManager, { Point, Layout } from "./layoutmanager/LayoutManager";
+import MasonaryLayoutManager from "./layoutmanager/MasonaryLayoutManager";
+
+
+import {
+    LayoutManagerInterface,
+    Point,
+    Rect,
+    Layout,
+} from "./dependencies/LayoutManagerInterface";
+
 import Messages from "./messages/Messages";
 import BaseScrollComponent from "./scrollcomponent/BaseScrollComponent";
 import BaseScrollView, { ScrollEvent, ScrollViewDefaultProps } from "./scrollcomponent/BaseScrollView";
@@ -322,7 +332,7 @@ export default class RecyclerListView extends React.Component<RecyclerListViewPr
         }
         if (forceFullRender || this.props.layoutProvider !== newProps.layoutProvider || this.props.isHorizontal !== newProps.isHorizontal) {
             //TODO:Talha use old layout manager
-            this._virtualRenderer.setLayoutManager(new LayoutManager(newProps.layoutProvider, this._layout, newProps.isHorizontal));
+            this._virtualRenderer.setLayoutManager(new MasonaryLayoutManager(2, newProps.layoutProvider, this._layout, newProps.isHorizontal));
             this._virtualRenderer.refreshWithAnchor();
             this._refreshViewability();
         } else if (this.props.dataProvider !== newProps.dataProvider) {
@@ -397,7 +407,15 @@ export default class RecyclerListView extends React.Component<RecyclerListViewPr
             renderAheadOffset: this.props.renderAheadOffset,
         };
         this._virtualRenderer.setParamsAndDimensions(this._params, this._layout);
-        this._virtualRenderer.setLayoutManager(new LayoutManager(this.props.layoutProvider, this._layout, this.props.isHorizontal, this._cachedLayouts));
+        this._virtualRenderer.setLayoutManager(
+            new MasonaryLayoutManager(
+                2,
+                this.props.layoutProvider,
+                this._layout,
+                this.props.isHorizontal,
+                this._cachedLayouts,
+            )
+        );
         this._virtualRenderer.setLayoutProvider(this.props.layoutProvider);
         this._virtualRenderer.init();
         const offset = this._virtualRenderer.getInitialOffset();
@@ -429,7 +447,7 @@ export default class RecyclerListView extends React.Component<RecyclerListViewPr
         const dataSize = this.props.dataProvider.getSize();
         const dataIndex = itemMeta.dataIndex;
         if (!ObjectUtil.isNullOrUndefined(dataIndex) && dataIndex < dataSize) {
-            const itemRect = (this._virtualRenderer.getLayoutManager() as LayoutManager).getLayouts()[dataIndex];
+            const itemRect = (this._virtualRenderer.getLayoutManager() as LayoutManagerInterface).getLayouts()[dataIndex];
             const data = this.props.dataProvider.getDataForIndex(dataIndex);
             const type = this.props.layoutProvider.getLayoutTypeForIndex(dataIndex);
             const key = this._virtualRenderer.syncAndGetKey(dataIndex);
@@ -460,7 +478,7 @@ export default class RecyclerListView extends React.Component<RecyclerListViewPr
 
     private _onViewContainerSizeChange(dim: Dimension, index: number): void {
         //Cannot be null here
-        (this._virtualRenderer.getLayoutManager() as LayoutManager).overrideLayout(index, dim);
+        (this._virtualRenderer.getLayoutManager() as LayoutManagerInterface).overrideLayout(index, dim);
         if (this._relayoutReqIndex === -1) {
             this._relayoutReqIndex = index;
         } else {
@@ -471,7 +489,7 @@ export default class RecyclerListView extends React.Component<RecyclerListViewPr
 
     private _checkExpectedDimensionDiscrepancy(itemRect: Dimension, type: string | number, index: number): void {
         //Cannot be null here
-        const layoutManager = this._virtualRenderer.getLayoutManager() as LayoutManager;
+        const layoutManager = this._virtualRenderer.getLayoutManager() as LayoutManagerInterface;
         layoutManager.setMaxBounds(this._tempDim);
         this.props.layoutProvider.setLayoutForType(type, this._tempDim, index);
 

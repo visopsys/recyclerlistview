@@ -2,7 +2,8 @@ import RecycleItemPool from "../utils/RecycleItemPool";
 import { default as LayoutProvider, Dimension } from "./dependencies/LayoutProvider";
 import CustomError from "./exceptions/CustomError";
 import RecyclerListViewExceptions from "./exceptions/RecyclerListViewExceptions";
-import LayoutManager, { Point } from "./layoutmanager/LayoutManager";
+// import LayoutManager, { Point } from "./layoutmanager/LayoutManager";
+import { LayoutManagerInterface, Point, Rect } from "./dependencies/LayoutManagerInterface";
 import ViewabilityTracker, { TOnItemStatusChanged } from "./ViewabilityTracker";
 import { ObjectUtil, Default } from "ts-object-utils";
 import TSCast from "../utils/TSCast";
@@ -48,7 +49,7 @@ export default class VirtualRenderer {
     private _recyclePool: RecycleItemPool = TSCast.cast<RecycleItemPool>(null); //TSI
 
     private _params: RenderStackParams | null;
-    private _layoutManager: LayoutManager | null = null;
+    private _layoutManager: LayoutManagerInterface | null = null;
     private _viewabilityTracker: ViewabilityTracker | null = null;
     private _dimensions: Dimension | null;
 
@@ -113,7 +114,7 @@ export default class VirtualRenderer {
         }
     }
 
-    public getLayoutManager(): LayoutManager | null {
+    public getLayoutManager(): LayoutManagerInterface | null {
         return this._layoutManager;
     }
 
@@ -122,7 +123,7 @@ export default class VirtualRenderer {
         this._dimensions = dim;
     }
 
-    public setLayoutManager(layoutManager: LayoutManager): void {
+    public setLayoutManager(layoutManager: LayoutManagerInterface): void {
         this._layoutManager = layoutManager;
         if (this._params) {
             this._layoutManager.reLayoutFromIndex(0, this._params.itemCount);

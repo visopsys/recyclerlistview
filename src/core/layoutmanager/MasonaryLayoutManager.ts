@@ -118,9 +118,9 @@ export default class LayoutManager {
     }
     this._layouts = newLayouts;
 
-     const maxColumnIdxFn = () => columnLenghts.reduce((acc, val, idx, arr) => (arr[acc] > val ? acc : idx), 0);
+    const maxColumnIdxFn = () => columnLenghts.reduce((acc, val, idx, arr) => (arr[acc] > val ? acc : idx), 0);
 
-     if (this._isHorizontal) {
+    if (this._isHorizontal) {
       this._totalHeight = this._window.height;
       this._totalWidth = columnLenghts[maxColumnIdxFn()];
     } else {
