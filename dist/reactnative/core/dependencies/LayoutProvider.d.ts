@@ -1,4 +1,4 @@
-import { Layout, LayoutManager } from "../layoutmanager/LayoutManager";
+import { Layout, WrapGridLayoutManager, LayoutManager } from "../layoutmanager/LayoutManager";
 /**
  * Created by talha.naqvi on 05/04/17.
  * You can create a new instance or inherit and override default methods
@@ -22,7 +22,7 @@ export declare class LayoutProvider extends BaseLayoutProvider {
     private _getLayoutTypeForIndex;
     private _setLayoutForType;
     private _tempDim;
-    private _lastLayoutManager;
+    protected _lastLayoutManager: WrapGridLayoutManager | undefined;
     constructor(getLayoutTypeForIndex: (index: number) => string | number, setLayoutForType: (type: string | number, dim: Dimension, index: number) => void);
     newLayoutManager(renderWindowSize: Dimension, isHorizontal?: boolean, cachedLayouts?: Layout[]): LayoutManager;
     getLayoutTypeForIndex(index: number): string | number;

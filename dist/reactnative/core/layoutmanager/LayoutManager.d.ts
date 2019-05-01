@@ -12,13 +12,12 @@ export declare abstract class LayoutManager {
     abstract relayoutFromIndex(startIndex: number, itemCount: number): void;
 }
 export declare class WrapGridLayoutManager extends LayoutManager {
-    private _layoutProvider;
-    private _window;
-    private _totalHeight;
-    private _totalWidth;
-    private _isHorizontal;
-    private _layouts;
-    private _columnCount;
+    protected _layoutProvider: LayoutProvider;
+    protected _window: Dimension;
+    protected _totalHeight: number;
+    protected _totalWidth: number;
+    protected _isHorizontal: boolean;
+    protected _layouts: Layout[];
     constructor(layoutProvider: LayoutProvider, renderWindowSize: Dimension, isHorizontal?: boolean, cachedLayouts?: Layout[]);
     getContentDimension(): Dimension;
     getLayouts(): Layout[];

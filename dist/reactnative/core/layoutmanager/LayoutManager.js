@@ -44,7 +44,6 @@ var WrapGridLayoutManager = /** @class */ (function (_super) {
         _this._totalWidth = 0;
         _this._isHorizontal = !!isHorizontal;
         _this._layouts = cachedLayouts ? cachedLayouts : [];
-        _this._columnCount = 2;
         return _this;
     }
     WrapGridLayoutManager.prototype.getContentDimension = function () {
@@ -83,63 +82,68 @@ var WrapGridLayoutManager = /** @class */ (function (_super) {
     };
     //TODO:Talha laziliy calculate in future revisions
     WrapGridLayoutManager.prototype.relayoutFromIndex = function (startIndex, itemCount) {
-        // startIndex = this._locateFirstNeighbourIndex(startIndex);
-        //TODO find a way to use start index
-        startIndex = 0;
+        startIndex = this._locateFirstNeighbourIndex(startIndex);
         var startX = 0;
         var startY = 0;
-        var itemDim = { height: 0, width: 0 };
-        var newLayouts = [];
-        var columnLenghts = [];
-        for (var idx = 0; idx < this._columnCount; idx++) {
-            columnLenghts[idx] = 0;
+        var maxBound = 0;
+        var startVal = this._layouts[startIndex];
+        if (startVal) {
+            startX = startVal.x;
+            startY = startVal.y;
+            this._pointDimensionsToRect(startVal);
         }
-        var minColumnIdxFn = function (cols) { return cols.reduce(function (acc, val, idx, arr) { return (val < arr[acc] ? idx : acc); }, 0); };
-        var colLenght = (this._isHorizontal ? this._window.height : this._window.width) / this._columnCount;
+        var oldItemCount = this._layouts.length;
+        var itemDim = { height: 0, width: 0 };
+        var itemRect = null;
+        var oldLayout = null;
         for (var i = startIndex; i < itemCount; i++) {
-            var oldLayout = this._layouts[i];
-            if (oldLayout && oldLayout.isOverridden) {
+            oldLayout = this._layouts[i];
+            var layoutType = this._layoutProvider.getLayoutTypeForIndex(i);
+            if (oldLayout && oldLayout.isOverridden && oldLayout.type === layoutType) {
                 itemDim.height = oldLayout.height;
                 itemDim.width = oldLayout.width;
             }
             else {
-                this._layoutProvider.setComputedLayout(this._layoutProvider.getLayoutTypeForIndex(i), itemDim, i);
+                this._layoutProvider.setComputedLayout(layoutType, itemDim, i);
             }
             this.setMaxBounds(itemDim);
-            var minColumnIdx = minColumnIdxFn(columnLenghts);
-            startY = columnLenghts[minColumnIdx];
-            startX = colLenght * minColumnIdx;
-            // newLayouts.push({ x: startX, y: startY, height: itemDim.height, width: itemDim.width });
-            newLayouts.push({
-                x: startX,
-                y: startY,
-                height: itemDim.height,
-                width: itemDim.width,
-            });
-            if (this._isHorizontal) {
-                columnLenghts[minColumnIdx] += itemDim.width;
-                if (startY + colLenght <= this._window.height) {
-                    startY = startY + colLenght;
+            while (!this._checkBounds(startX, startY, itemDim, this._isHorizontal)) {
+                if (this._isHorizontal) {
+                    startX += maxBound;
+                    startY = 0;
+                    this._totalWidth += maxBound;
                 }
                 else {
-                    startY = 0;
+                    startX = 0;
+                    startY += maxBound;
+                    this._totalHeight += maxBound;
                 }
-                startX = columnLenghts[minColumnIdxFn(columnLenghts)];
+                maxBound = 0;
+            }
+            maxBound = this._isHorizontal ? Math.max(maxBound, itemDim.width) : Math.max(maxBound, itemDim.height);
+            //TODO: Talha creating array upfront will speed this up
+            if (i > oldItemCount - 1) {
+                this._layouts.push({ x: startX, y: startY, height: itemDim.height, width: itemDim.width, type: layoutType });
             }
             else {
-                columnLenghts[minColumnIdx] += itemDim.height;
+                itemRect = this._layouts[i];
+                itemRect.x = startX;
+                itemRect.y = startY;
+                itemRect.type = layoutType;
+                itemRect.width = itemDim.width;
+                itemRect.height = itemDim.height;
+            }
+            if (this._isHorizontal) {
+                startY += itemDim.height;
+            }
+            else {
+                startX += itemDim.width;
             }
         }
-        this._layouts = newLayouts;
-        var maxColumnIdxFn = function () { return columnLenghts.reduce(function (acc, val, idx, arr) { return (arr[acc] > val ? acc : idx); }, 0); };
-        if (this._isHorizontal) {
-            this._totalHeight = this._window.height;
-            this._totalWidth = columnLenghts[maxColumnIdxFn()];
+        if (oldItemCount > itemCount) {
+            this._layouts.splice(itemCount, oldItemCount - itemCount);
         }
-        else {
-            this._totalWidth = this._window.width;
-            this._totalHeight = columnLenghts[maxColumnIdxFn()];
-        }
+        this._setFinalDimensions(maxBound);
     };
     WrapGridLayoutManager.prototype._pointDimensionsToRect = function (itemRect) {
         if (this._isHorizontal) {
