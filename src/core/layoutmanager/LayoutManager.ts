@@ -41,13 +41,12 @@ export abstract class LayoutManager {
 }
 
 export class WrapGridLayoutManager extends LayoutManager {
-    private _layoutProvider: LayoutProvider;
-    private _window: Dimension;
-    private _totalHeight: number;
-    private _totalWidth: number;
-    private _isHorizontal: boolean;
-    private _layouts: Layout[];
-    private _columnCount: number;
+    protected _layoutProvider: LayoutProvider;
+    protected _window: Dimension;
+    protected _totalHeight: number;
+    protected _totalWidth: number;
+    protected _isHorizontal: boolean;
+    protected _layouts: Layout[];
 
     constructor(layoutProvider: LayoutProvider, renderWindowSize: Dimension, isHorizontal: boolean = false, cachedLayouts?: Layout[]) {
         super();
@@ -57,7 +56,6 @@ export class WrapGridLayoutManager extends LayoutManager {
         this._totalWidth = 0;
         this._isHorizontal = !!isHorizontal;
         this._layouts = cachedLayouts ? cachedLayouts : [];
-        this._columnCount = 2;
     }
 
     public getContentDimension(): Dimension {
@@ -99,68 +97,72 @@ export class WrapGridLayoutManager extends LayoutManager {
 
     //TODO:Talha laziliy calculate in future revisions
     public relayoutFromIndex(startIndex: number, itemCount: number): void {
-        // startIndex = this._locateFirstNeighbourIndex(startIndex);
-        //TODO find a way to use start index
-        startIndex = 0;
-
+        startIndex = this._locateFirstNeighbourIndex(startIndex);
         let startX = 0;
         let startY = 0;
+        let maxBound = 0;
 
-        const itemDim = { height: 0, width: 0 };
+        const startVal = this._layouts[startIndex];
 
-        const newLayouts = [];
-        const columnLenghts: number[] = [];
-        for (let idx = 0; idx < this._columnCount; idx++) {
-          columnLenghts[idx] = 0;
+        if (startVal) {
+            startX = startVal.x;
+            startY = startVal.y;
+            this._pointDimensionsToRect(startVal);
         }
-        const minColumnIdxFn = (cols: number[]) => cols.reduce((acc, val, idx, arr) => (val < arr[acc] ? idx : acc), 0);
-        const colLenght = (this._isHorizontal ? this._window.height : this._window.width) / this._columnCount;
+
+        const oldItemCount = this._layouts.length;
+        const itemDim = { height: 0, width: 0 };
+        let itemRect = null;
+
+        let oldLayout = null;
+
         for (let i = startIndex; i < itemCount; i++) {
-            const oldLayout = this._layouts[i];
-            if (oldLayout && oldLayout.isOverridden) {
+            oldLayout = this._layouts[i];
+            const layoutType = this._layoutProvider.getLayoutTypeForIndex(i);
+            if (oldLayout && oldLayout.isOverridden && oldLayout.type === layoutType) {
                 itemDim.height = oldLayout.height;
                 itemDim.width = oldLayout.width;
             } else {
-                this._layoutProvider.setComputedLayout(this._layoutProvider.getLayoutTypeForIndex(i), itemDim, i);
+                this._layoutProvider.setComputedLayout(layoutType, itemDim, i);
             }
             this.setMaxBounds(itemDim);
+            while (!this._checkBounds(startX, startY, itemDim, this._isHorizontal)) {
+                if (this._isHorizontal) {
+                    startX += maxBound;
+                    startY = 0;
+                    this._totalWidth += maxBound;
+                } else {
+                    startX = 0;
+                    startY += maxBound;
+                    this._totalHeight += maxBound;
+                }
+                maxBound = 0;
+            }
 
-            const minColumnIdx = minColumnIdxFn(columnLenghts);
-            startY = columnLenghts[minColumnIdx];
-            startX = colLenght * minColumnIdx;
+            maxBound = this._isHorizontal ? Math.max(maxBound, itemDim.width) : Math.max(maxBound, itemDim.height);
 
-            // newLayouts.push({ x: startX, y: startY, height: itemDim.height, width: itemDim.width });
-            newLayouts.push(<Layout> {
-                x: startX,
-                y: startY,
-                height: itemDim.height,
-                width: itemDim.width,
-              }
-            )
+            //TODO: Talha creating array upfront will speed this up
+            if (i > oldItemCount - 1) {
+                this._layouts.push({ x: startX, y: startY, height: itemDim.height, width: itemDim.width, type: layoutType });
+            } else {
+                itemRect = this._layouts[i];
+                itemRect.x = startX;
+                itemRect.y = startY;
+                itemRect.type = layoutType;
+                itemRect.width = itemDim.width;
+                itemRect.height = itemDim.height;
+            }
 
             if (this._isHorizontal) {
-                columnLenghts[minColumnIdx] += itemDim.width;
-                if (startY + colLenght <= this._window.height) {
-                    startY = startY + colLenght;
-                } else {
-                    startY = 0;
-                }
-                startX = columnLenghts[minColumnIdxFn(columnLenghts)];
+                startY += itemDim.height;
             } else {
-                columnLenghts[minColumnIdx] += itemDim.height;
+                startX += itemDim.width;
             }
         }
-        this._layouts = newLayouts;
-
-        const maxColumnIdxFn = () => columnLenghts.reduce((acc, val, idx, arr) => (arr[acc] > val ? acc : idx), 0);
-
-        if (this._isHorizontal) {
-            this._totalHeight = this._window.height;
-            this._totalWidth = columnLenghts[maxColumnIdxFn()];
-        } else {
-            this._totalWidth = this._window.width;
-            this._totalHeight = columnLenghts[maxColumnIdxFn()];
+        if (oldItemCount > itemCount) {
+            this._layouts.splice(itemCount, oldItemCount - itemCount);
         }
+        this._setFinalDimensions(maxBound);
     }
 
     private _pointDimensionsToRect(itemRect: Layout): void {

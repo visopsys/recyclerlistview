@@ -35,7 +35,7 @@ export class LayoutProvider extends BaseLayoutProvider {
     private _getLayoutTypeForIndex: (index: number) => string | number;
     private _setLayoutForType: (type: string | number, dim: Dimension, index: number) => void;
     private _tempDim: Dimension;
-    private _lastLayoutManager: WrapGridLayoutManager | undefined;
+    protected _lastLayoutManager: WrapGridLayoutManager | undefined;
 
     constructor(getLayoutTypeForIndex: (index: number) => string | number, setLayoutForType: (type: string | number, dim: Dimension, index: number) => void) {
         super();
